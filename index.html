@@ -1,0 +1,1816 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NERO — Ristorante Italiano</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=Inter:wght@300;400;500;600&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&display=swap');
+
+  :root {
+    --gold: #c9a84c;
+    --gold-light: #e8c97a;
+    --gold-dim: #8a6f2e;
+    --black: #050505;
+    --dark: #0d0d0d;
+    --panel: #111111;
+    --border: rgba(201,168,76,0.2);
+    --text: #e8e0d0;
+    --muted: #6b6355;
+    --red: #8b1a1a;
+    --cream: #f5f0e8;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--black);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    font-weight: 300;
+    overflow-x: hidden;
+    min-height: 100vh;
+    cursor: none;
+  }
+
+  /* ── CURSOR ── */
+  #cursor {
+    position: fixed;
+    width: 8px; height: 8px;
+    background: var(--gold);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9999;
+    transform: translate(-50%, -50%);
+  }
+  #cursor-ring {
+    position: fixed;
+    width: 36px; height: 36px;
+    border: 1px solid rgba(201,168,76,0.5);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9998;
+    transform: translate(-50%, -50%);
+    transition: all 0.18s ease;
+  }
+
+  /* ── GRAIN ── */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 100;
+    opacity: 0.4;
+  }
+
+  /* ── SIDEBAR ── */
+  #sidebar {
+    position: fixed;
+    left: 0; top: 0; bottom: 0;
+    width: 72px;
+    background: rgba(13,13,13,0.95);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    padding: 28px 0;
+    z-index: 200;
+    backdrop-filter: blur(20px);
+  }
+  .logo-mark {
+    font-family: 'Playfair Display', serif;
+    font-size: 22px; color: var(--gold);
+    letter-spacing: 2px;
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    transform: rotate(180deg);
+    font-weight: 900;
+  }
+  .nav-links { display: flex; flex-direction: column; gap: 6px; align-items: center; list-style: none; }
+  .nav-links li a {
+    display: flex; flex-direction: column; align-items: center; gap: 5px;
+    padding: 12px 8px;
+    text-decoration: none;
+    color: var(--muted);
+    font-size: 9px; font-weight: 500; letter-spacing: 1.5px; text-transform: uppercase;
+    writing-mode: vertical-rl; text-orientation: mixed; transform: rotate(180deg);
+    border-left: 2px solid transparent;
+    transition: all 0.3s ease;
+    position: relative;
+  }
+  .nav-links li a::before {
+    content: '';
+    position: absolute; left: -2px; top: 0; bottom: 0;
+    width: 2px; background: var(--gold);
+    transform: scaleY(0); transition: transform 0.3s ease;
+  }
+  .nav-links li a.active, .nav-links li a:hover { color: var(--gold); }
+  .nav-links li a.active::before, .nav-links li a:hover::before { transform: scaleY(1); }
+  .nav-year { font-size: 9px; color: var(--muted); letter-spacing: 2px; opacity: 0.5; writing-mode: vertical-rl; transform: rotate(180deg); }
+
+  /* ── MAIN ── */
+  #main { margin-left: 72px; min-height: 100vh; position: relative; }
+
+  /* ── TABS ── */
+  .tab-section { display: none; min-height: 100vh; animation: fadeIn 0.6s ease; }
+  .tab-section.active { display: block; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── HERO ── */
+  #tab-casa { position: relative; overflow: hidden; }
+  .hero-bg {
+    position: absolute; inset: 0;
+    background-image: url('https://images.unsplash.com/photo-1579027989536-b7b1f875659b?w=1920&q=85&auto=format&fit=crop');
+    background-size: cover; background-position: center;
+    filter: brightness(0.25) saturate(0.6);
+    transform: scale(1.05);
+    animation: subtleZoom 20s ease-in-out infinite alternate;
+  }
+  @keyframes subtleZoom { from { transform: scale(1.05); } to { transform: scale(1.12); } }
+  .hero-overlay {
+    position: absolute; inset: 0;
+    background: linear-gradient(135deg, rgba(5,5,5,0.7) 0%, transparent 60%, rgba(5,5,5,0.8) 100%);
+  }
+  .hero-content {
+    position: relative; z-index: 10;
+    min-height: 100vh;
+    display: grid; grid-template-columns: 1fr 1fr;
+    align-items: end;
+    padding: clamp(40px, 6vh, 80px) 80px clamp(40px, 6vh, 80px); gap: 32px;
+  }
+  .hero-left { align-self: end; }
+  .hero-eyebrow {
+    font-size: 11px; letter-spacing: 5px; color: var(--gold); text-transform: uppercase;
+    margin-bottom: 24px; display: flex; align-items: center; gap: 16px;
+  }
+  .hero-eyebrow::before { content: ''; width: 40px; height: 1px; background: var(--gold); }
+  .hero-title {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(72px, 8vw, 120px); font-weight: 900; line-height: 0.9;
+    color: var(--cream); margin-bottom: 32px;
+  }
+  .hero-title em { font-style: italic; color: var(--gold); display: block; }
+  .hero-sub {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 20px; color: rgba(232,224,208,0.6); font-style: italic;
+    line-height: 1.7; max-width: 420px; margin-bottom: 48px;
+  }
+  .btn-primary {
+    display: inline-flex; align-items: center; gap: 16px;
+    padding: 18px 36px; background: transparent; border: 1px solid var(--gold);
+    color: var(--gold); font-size: 11px; letter-spacing: 3px; text-transform: uppercase;
+    text-decoration: none; cursor: none; transition: all 0.4s ease;
+    position: relative; overflow: hidden;
+  }
+  .btn-primary::before {
+    content: ''; position: absolute; inset: 0;
+    background: var(--gold); transform: translateX(-101%); transition: transform 0.4s ease; z-index: -1;
+  }
+  .btn-primary:hover { color: var(--black); }
+  .btn-primary:hover::before { transform: translateX(0); }
+  .btn-arrow { font-size: 18px; transition: transform 0.3s; }
+  .btn-primary:hover .btn-arrow { transform: translateX(6px); }
+  .hero-right { align-self: end; }
+  .hero-stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--border); }
+  .hero-stat { background: rgba(13,13,13,0.8); padding: 28px 24px; backdrop-filter: blur(10px); }
+  .hero-stat-num { font-family: 'Playfair Display', serif; font-size: 42px; font-weight: 700; color: var(--gold); line-height: 1; margin-bottom: 6px; }
+  .hero-stat-label { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); }
+  .hero-bottom {
+    position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%);
+    display: flex; align-items: center; gap: 16px;
+    color: var(--muted); font-size: 10px; letter-spacing: 3px; text-transform: uppercase;
+    animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
+  .hero-bottom::before, .hero-bottom::after { content: ''; width: 30px; height: 1px; background: var(--muted); }
+
+  /* ── TOP BAR ── */
+  .section-topbar {
+    position: sticky; top: 0; z-index: 150;
+    background: rgba(5,5,5,0.95); border-bottom: 1px solid var(--border);
+    padding: 20px 80px;
+    display: flex; align-items: center; justify-content: space-between;
+    backdrop-filter: blur(20px);
+  }
+  .topbar-title { font-family: 'Playfair Display', serif; font-size: 13px; letter-spacing: 4px; color: var(--gold); text-transform: uppercase; }
+  .topbar-brand { font-family: 'Playfair Display', serif; font-size: 28px; font-weight: 900; color: var(--text); letter-spacing: 6px; }
+  .topbar-meta { font-size: 10px; letter-spacing: 2px; color: var(--muted); text-align: right; }
+
+  /* ── CARTA HERO ── */
+  .carta-hero {
+    padding: 80px 80px 60px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: flex-end; justify-content: space-between; gap: 40px;
+  }
+  .carta-title { font-family: 'Playfair Display', serif; font-size: clamp(60px, 6vw, 96px); font-weight: 900; line-height: 0.9; color: var(--cream); }
+  .carta-title em { color: var(--gold); font-style: italic; display: block; }
+  .carta-desc { max-width: 340px; font-family: 'Cormorant Garamond', serif; font-size: 18px; color: rgba(232,224,208,0.55); font-style: italic; line-height: 1.8; }
+
+  /* ── MENU CATEGORY TABS ── */
+  .menu-tabs {
+    display: flex; gap: 0;
+    padding: 0 80px; border-bottom: 1px solid var(--border);
+    overflow-x: auto; scrollbar-width: none;
+  }
+  .menu-tab {
+    padding: 20px 28px; font-size: 10px; letter-spacing: 3px; text-transform: uppercase;
+    color: var(--muted); cursor: none;
+    border-bottom: 2px solid transparent; transition: all 0.3s;
+    white-space: nowrap; background: none;
+    border-left: none; border-right: none; border-top: none;
+    font-family: 'Inter', sans-serif;
+  }
+  .menu-tab.active, .menu-tab:hover { color: var(--gold); border-bottom-color: var(--gold); }
+
+  .menu-category { display: none; padding: 60px 80px 80px; animation: fadeIn 0.5s ease; }
+  .menu-category.active { display: block; }
+
+  .menu-category-header { margin-bottom: 48px; display: flex; align-items: baseline; gap: 24px; }
+  .menu-category-name { font-family: 'Playfair Display', serif; font-size: 48px; font-weight: 700; font-style: italic; color: var(--cream); }
+  .menu-category-it { font-size: 12px; letter-spacing: 3px; color: var(--gold); text-transform: uppercase; }
+
+  /* ── MENU GRID ITEMS (WITH PHOTOS) ── */
+  .menu-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 2px;
+    background: var(--border);
+  }
+
+  .menu-item {
+    background: var(--dark);
+    position: relative; overflow: hidden;
+    transition: background 0.3s;
+    cursor: none;
+  }
+  .menu-item::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    transform: scaleX(0); transition: transform 0.4s ease;
+    z-index: 10;
+  }
+  .menu-item:hover { background: #141414; }
+  .menu-item:hover::before { transform: scaleX(1); }
+
+  /* Photo container inside each menu item */
+  .menu-item-photo {
+    height: 210px;
+    overflow: hidden;
+    position: relative;
+  }
+  .menu-item-photo img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    filter: brightness(0.65) saturate(0.75);
+    transition: all 0.6s ease;
+    display: block;
+  }
+  .menu-item:hover .menu-item-photo img {
+    filter: brightness(0.85) saturate(1.1);
+    transform: scale(1.06);
+  }
+  .menu-item-photo-badge {
+    position: absolute; bottom: 12px; right: 14px;
+    font-size: 8px; letter-spacing: 2px; color: var(--gold);
+    text-transform: uppercase;
+    background: rgba(5,5,5,0.75);
+    padding: 4px 10px;
+    backdrop-filter: blur(6px);
+    border: 1px solid rgba(201,168,76,0.25);
+    opacity: 0; transition: opacity 0.3s;
+  }
+  .menu-item:hover .menu-item-photo-badge { opacity: 1; }
+
+  /* Text body */
+  .menu-item-body { padding: 24px 28px; }
+
+  .menu-item-top {
+    display: flex; justify-content: space-between; align-items: baseline;
+    margin-bottom: 10px;
+  }
+  .menu-item-name { font-family: 'Playfair Display', serif; font-size: 19px; font-weight: 600; color: var(--cream); flex: 1; padding-right: 12px; }
+  .menu-item-price { font-family: 'Playfair Display', serif; font-size: 19px; color: var(--gold); white-space: nowrap; }
+  .menu-item-desc { font-size: 13px; color: var(--muted); line-height: 1.7; margin-bottom: 16px; }
+  .menu-item-tags { display: flex; gap: 8px; flex-wrap: wrap; }
+  .tag { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; padding: 4px 10px; border: 1px solid rgba(201,168,76,0.25); color: var(--gold-dim); border-radius: 1px; }
+  .tag.veg { border-color: rgba(80,160,80,0.3); color: #6ab06a; }
+  .tag.new { border-color: rgba(201,168,76,0.5); color: var(--gold); }
+  .tag.spicy { border-color: rgba(180,60,60,0.3); color: #c06060; }
+
+  /* ── FEATURED MENU ITEM (with side image) ── */
+  .menu-featured { margin-bottom: 2px; }
+  .menu-featured .menu-item {
+    display: grid;
+    grid-template-columns: 1fr 300px;
+    gap: 0; padding: 0;
+    background: var(--panel);
+  }
+  .menu-featured .menu-item-content { padding: 40px; display: flex; flex-direction: column; justify-content: center; }
+  .menu-featured .menu-item-img { height: 240px; overflow: hidden; }
+  .menu-featured .menu-item-img img {
+    width: 100%; height: 100%; object-fit: cover;
+    filter: brightness(0.6) saturate(0.7);
+    transition: transform 0.6s ease, filter 0.3s;
+  }
+  .menu-featured .menu-item:hover .menu-item-img img { transform: scale(1.05); filter: brightness(0.8) saturate(1); }
+  .chef-badge { display: inline-flex; align-items: center; gap: 8px; font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--gold); margin-bottom: 16px; }
+  .chef-badge::before { content: '★'; font-size: 12px; }
+
+  /* ── VINI CARDS ── */
+  .vini-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(440px, 1fr));
+    gap: 2px;
+    background: var(--border);
+  }
+  .vino-item {
+    background: var(--dark);
+    display: grid;
+    grid-template-columns: 180px 1fr;
+    overflow: hidden;
+    position: relative;
+    cursor: none;
+    transition: background 0.3s;
+  }
+  .vino-item::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    transform: scaleX(0); transition: transform 0.4s ease; z-index: 10;
+  }
+  .vino-item:hover { background: #141414; }
+  .vino-item:hover::before { transform: scaleX(1); }
+  .vino-photo { overflow: hidden; height: 200px; }
+  .vino-photo img {
+    width: 100%; height: 100%; object-fit: cover;
+    filter: brightness(0.55) saturate(0.6);
+    transition: all 0.6s ease;
+  }
+  .vino-item:hover .vino-photo img { filter: brightness(0.75) saturate(0.9); transform: scale(1.05); }
+  .vino-body { padding: 24px 28px; display: flex; flex-direction: column; justify-content: center; gap: 8px; }
+  .vino-region { font-size: 9px; letter-spacing: 3px; text-transform: uppercase; color: var(--gold-dim); }
+  .vino-name { font-family: 'Playfair Display', serif; font-size: 18px; font-weight: 700; color: var(--cream); }
+  .vino-producer { font-family: 'Cormorant Garamond', serif; font-size: 15px; font-style: italic; color: rgba(232,224,208,0.55); }
+  .vino-desc { font-size: 12px; color: var(--muted); line-height: 1.65; }
+  .vino-price { font-family: 'Playfair Display', serif; font-size: 16px; color: var(--gold); margin-top: 4px; }
+  .vino-tag { display: inline-block; font-size: 8px; letter-spacing: 2px; text-transform: uppercase; padding: 3px 8px; border: 1px solid rgba(201,168,76,0.25); color: var(--gold-dim); }
+  .vino-tag.sommelier { border-color: rgba(201,168,76,0.5); color: var(--gold); }
+
+  /* ── ORNAMENT ── */
+  .ornament { display: flex; align-items: center; gap: 20px; color: var(--gold-dim); font-size: 14px; margin: 40px 0; }
+  .ornament::before, .ornament::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, transparent, var(--gold-dim), transparent); }
+
+  /* ── STORIA ── */
+  .storia-grid { display: grid; grid-template-columns: 1fr 1fr; min-height: calc(100vh - 81px); }
+  .storia-left { padding: 80px; display: flex; flex-direction: column; justify-content: center; border-right: 1px solid var(--border); }
+  .storia-eyebrow { font-size: 10px; letter-spacing: 4px; color: var(--gold); text-transform: uppercase; margin-bottom: 32px; display: flex; align-items: center; gap: 16px; }
+  .storia-eyebrow::before { content: ''; width: 32px; height: 1px; background: var(--gold); }
+  .storia-title { font-family: 'Playfair Display', serif; font-size: clamp(48px, 4vw, 72px); font-weight: 900; line-height: 1.05; color: var(--cream); margin-bottom: 40px; }
+  .storia-title em { color: var(--gold); font-style: italic; }
+  .storia-body { font-family: 'Cormorant Garamond', serif; font-size: 19px; color: rgba(232,224,208,0.65); line-height: 1.9; font-style: italic; margin-bottom: 24px; }
+  .storia-body-plain { font-size: 14px; color: rgba(232,224,208,0.45); line-height: 2; margin-bottom: 48px; }
+  .storia-timeline { display: flex; flex-direction: column; gap: 0; border-left: 1px solid var(--border); padding-left: 28px; }
+  .timeline-item { padding-bottom: 32px; position: relative; }
+  .timeline-item::before { content: ''; position: absolute; left: -33px; top: 6px; width: 9px; height: 9px; border: 1px solid var(--gold); background: var(--black); border-radius: 50%; }
+  .timeline-year { font-size: 10px; letter-spacing: 3px; color: var(--gold); text-transform: uppercase; margin-bottom: 6px; }
+  .timeline-event { font-size: 14px; color: var(--muted); line-height: 1.6; }
+  .storia-right { position: relative; overflow: hidden; }
+  .storia-img-grid { display: grid; grid-template-rows: 1fr 1fr; height: 100%; }
+  .storia-img { overflow: hidden; position: relative; }
+  .storia-img img { width: 100%; height: 100%; object-fit: cover; filter: brightness(0.5) saturate(0.5); transition: all 0.6s ease; }
+  .storia-img:hover img { filter: brightness(0.7) saturate(0.8); transform: scale(1.04); }
+  .storia-img-label { position: absolute; bottom: 20px; left: 24px; font-size: 10px; letter-spacing: 3px; color: var(--gold); text-transform: uppercase; opacity: 0; transition: opacity 0.3s; }
+  .storia-img:hover .storia-img-label { opacity: 1; }
+
+  /* ── TAVOLA ── */
+  .tavola-container { display: grid; grid-template-columns: 1fr 1fr; min-height: calc(100vh - 81px); }
+  .tavola-left { padding: 80px; border-right: 1px solid var(--border); display: flex; flex-direction: column; justify-content: center; }
+  .tavola-title { font-family: 'Playfair Display', serif; font-size: clamp(48px, 4vw, 72px); font-weight: 900; line-height: 1; color: var(--cream); margin-bottom: 16px; }
+  .tavola-title em { color: var(--gold); font-style: italic; display: block; }
+  .tavola-sub { font-family: 'Cormorant Garamond', serif; font-size: 18px; color: rgba(232,224,208,0.55); font-style: italic; margin-bottom: 52px; line-height: 1.7; }
+  .form-group { margin-bottom: 24px; position: relative; }
+  .form-group label { display: block; font-size: 9px; letter-spacing: 3px; text-transform: uppercase; color: var(--gold-dim); margin-bottom: 10px; }
+  .form-group input, .form-group select, .form-group textarea {
+    width: 100%; background: transparent; border: none; border-bottom: 1px solid var(--border);
+    padding: 14px 0; color: var(--text); font-size: 16px;
+    font-family: 'Cormorant Garamond', serif; outline: none; transition: border-color 0.3s; cursor: none;
+    -webkit-appearance: none; appearance: none; border-radius: 0;
+  }
+  .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-bottom-color: var(--gold); }
+  .form-group input::placeholder, .form-group textarea::placeholder { color: var(--muted); font-style: italic; }
+  .form-group select option { background: #111; color: var(--text); }
+  .form-group.error input, .form-group.error select, .form-group.error textarea { border-bottom-color: #c06060; }
+  .form-group.error label { color: #c06060; }
+  .select-wrap { position: relative; }
+  .select-wrap::after {
+    content: '›';
+    position: absolute; right: 0; top: 50%; transform: translateY(-50%) rotate(90deg);
+    color: var(--gold-dim); font-size: 16px; pointer-events: none;
+  }
+  .select-wrap select { padding-right: 20px; cursor: pointer; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .btn-reserve {
+    display: inline-flex; align-items: center; gap: 16px;
+    padding: 20px 40px; background: var(--gold); color: var(--black);
+    font-size: 11px; letter-spacing: 3px; text-transform: uppercase;
+    cursor: none; border: none; font-family: 'Inter', sans-serif; font-weight: 500;
+    transition: all 0.3s ease; margin-top: 12px;
+  }
+  .btn-reserve:hover { background: var(--gold-light); }
+  .tavola-right { position: relative; overflow: hidden; }
+  .tavola-img { position: absolute; inset: 0; }
+  .tavola-img img { width: 100%; height: 100%; object-fit: cover; filter: brightness(0.3) saturate(0.4); }
+  .tavola-overlay { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 40px; padding: 60px; }
+  .info-card { width: 100%; max-width: 360px; background: rgba(5,5,5,0.8); border: 1px solid var(--border); padding: 28px 32px; backdrop-filter: blur(10px); }
+  .info-card-title { font-size: 9px; letter-spacing: 3px; text-transform: uppercase; color: var(--gold); margin-bottom: 16px; }
+  .info-card-body { font-family: 'Cormorant Garamond', serif; font-size: 17px; color: rgba(232,224,208,0.7); font-style: italic; line-height: 1.8; }
+
+  /* ── CONTATTO ── */
+  .contatto-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; border-top: 1px solid var(--border); min-height: calc(100vh - 81px); }
+  .contatto-col { padding: 80px 48px; border-right: 1px solid var(--border); display: flex; flex-direction: column; justify-content: space-between; }
+  .contatto-col:last-child { border-right: none; }
+  .contatto-col-title { font-size: 9px; letter-spacing: 4px; text-transform: uppercase; color: var(--gold-dim); margin-bottom: 32px; }
+  .contatto-big { font-family: 'Playfair Display', serif; font-size: 32px; font-weight: 700; color: var(--cream); line-height: 1.2; margin-bottom: 12px; }
+  .contatto-small { font-size: 13px; color: var(--muted); line-height: 1.8; }
+  .contatto-link { color: var(--gold); text-decoration: none; font-family: 'Cormorant Garamond', serif; font-size: 18px; font-style: italic; display: block; margin-bottom: 6px; transition: opacity 0.2s; }
+  .contatto-link:hover { opacity: 0.7; }
+  .hours-row { display: flex; justify-content: space-between; align-items: baseline; padding: 14px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+  .hours-day { font-size: 12px; letter-spacing: 1px; color: var(--muted); text-transform: uppercase; }
+  .hours-time { font-family: 'Cormorant Garamond', serif; font-size: 16px; font-style: italic; color: rgba(232,224,208,0.6); }
+  .hours-time.closed { color: var(--red); opacity: 0.6; }
+  .map-placeholder { background: var(--panel); border: 1px solid var(--border); height: 200px; display: flex; align-items: center; justify-content: center; color: var(--muted); font-size: 11px; letter-spacing: 2px; text-transform: uppercase; margin-top: 32px; position: relative; overflow: hidden; }
+  .map-placeholder::before { content: ''; position: absolute; inset: 0; background: repeating-linear-gradient(-45deg, transparent, transparent 20px, rgba(201,168,76,0.03) 20px, rgba(201,168,76,0.03) 21px); }
+  .social-row { display: flex; gap: 16px; margin-top: 32px; }
+  .social-btn { width: 42px; height: 42px; border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; color: var(--muted); font-size: 12px; text-decoration: none; transition: all 0.3s; cursor: none; }
+  .social-btn:hover { border-color: var(--gold); color: var(--gold); }
+
+  /* ── FOOTER ── */
+  .site-footer { border-top: 1px solid var(--border); padding: 28px 80px; display: flex; align-items: center; justify-content: space-between; }
+  .footer-brand { font-family: 'Playfair Display', serif; font-size: 20px; font-weight: 900; letter-spacing: 6px; color: var(--gold); }
+  .footer-text { font-size: 10px; letter-spacing: 2px; color: var(--muted); text-transform: uppercase; }
+
+  /* ── SUCCESS MSG ── */
+  .success-msg { display: none; padding: 20px; border: 1px solid var(--gold); color: var(--gold); font-size: 12px; letter-spacing: 2px; text-transform: uppercase; margin-top: 20px; text-align: center; }
+
+  /* ══════════════════════════════════════
+     CASA — SECTIONS
+  ══════════════════════════════════════ */
+
+  /* ── CHEF SECTION ── */
+  .chef-section {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    border-top: 1px solid var(--border);
+  }
+  .chef-img {
+    overflow: hidden;
+    height: 600px;
+  }
+  .chef-img img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    filter: brightness(0.6) saturate(0.6);
+    transition: transform 0.6s ease;
+  }
+  .chef-img:hover img { transform: scale(1.03); }
+  .chef-info {
+    padding: 80px;
+    display: flex; flex-direction: column; justify-content: center;
+    border-left: 1px solid var(--border);
+    background: var(--dark);
+  }
+  .chef-eyebrow {
+    font-size: 9px; letter-spacing: 4px; text-transform: uppercase;
+    color: var(--gold); margin-bottom: 28px;
+    display: flex; align-items: center; gap: 14px;
+  }
+  .chef-eyebrow::before { content: ''; width: 28px; height: 1px; background: var(--gold); }
+  .chef-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 48px; font-weight: 900; color: var(--cream);
+    line-height: 1; margin-bottom: 8px;
+  }
+  .chef-role {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 18px; font-style: italic; color: var(--gold-dim);
+    margin-bottom: 36px;
+  }
+  .chef-bio {
+    font-size: 14px; color: var(--muted); line-height: 2;
+    margin-bottom: 36px;
+  }
+  .chef-cv {
+    display: flex; flex-direction: column; gap: 14px;
+    border-top: 1px solid var(--border);
+    padding-top: 32px;
+  }
+  .chef-cv-item {
+    display: flex; gap: 20px; align-items: baseline;
+  }
+  .chef-cv-year {
+    font-size: 9px; letter-spacing: 2px; color: var(--gold);
+    text-transform: uppercase; white-space: nowrap; min-width: 60px;
+  }
+  .chef-cv-place { font-size: 13px; color: rgba(232,224,208,0.6); line-height: 1.5; }
+
+  /* ── QUOTE BAND ── */
+  .quote-band {
+    padding: 80px;
+    background: var(--black);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: flex-start; gap: 60px;
+  }
+  .quote-mark {
+    font-family: 'Playfair Display', serif;
+    font-size: 120px; line-height: 0.7;
+    color: var(--gold); opacity: 0.3; flex-shrink: 0;
+    user-select: none;
+  }
+  .quote-body {
+    flex: 1;
+  }
+  .quote-text {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(22px, 2.8vw, 36px);
+    font-style: italic; color: var(--cream); line-height: 1.5;
+    margin-bottom: 28px;
+  }
+  .quote-source {
+    font-size: 10px; letter-spacing: 3px; text-transform: uppercase;
+    color: var(--gold-dim);
+  }
+
+  /* ── EL ESPACIO (INTERIOR) ── */
+  .espacio-section { border-top: 1px solid var(--border); }
+  .espacio-header {
+    padding: 80px;
+    display: flex; align-items: flex-end; justify-content: space-between; gap: 60px;
+    border-bottom: 1px solid var(--border);
+  }
+  .espacio-hl { flex: 1; }
+  .espacio-eyebrow {
+    font-size: 10px; letter-spacing: 4px; text-transform: uppercase;
+    color: var(--gold); margin-bottom: 24px;
+    display: flex; align-items: center; gap: 16px;
+  }
+  .espacio-eyebrow::before { content: ''; width: 32px; height: 1px; background: var(--gold); }
+  .espacio-title {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(52px, 5vw, 80px); font-weight: 900; font-style: italic;
+    color: var(--cream); line-height: 0.95;
+  }
+  .espacio-sub {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 20px; font-style: italic;
+    color: rgba(232,224,208,0.5); line-height: 1.75;
+    max-width: 380px; align-self: flex-end;
+  }
+
+  /* Main masonry grid: large left + 2 stacked right */
+  .espacio-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 340px 340px;
+    gap: 2px; background: var(--border);
+  }
+  .espacio-cell {
+    position: relative; overflow: hidden; cursor: none;
+  }
+  .espacio-large { grid-row: 1 / 3; }
+  .espacio-cell img {
+    width: 100%; height: 100%; object-fit: cover;
+    filter: brightness(0.45) saturate(0.6);
+    transition: filter 0.6s ease, transform 0.6s ease;
+    display: block;
+  }
+  .espacio-cell:hover img { filter: brightness(0.65) saturate(0.85); transform: scale(1.04); }
+  .espacio-label {
+    position: absolute; bottom: 22px; left: 26px;
+    font-size: 9px; letter-spacing: 4px; text-transform: uppercase;
+    color: var(--gold);
+    background: rgba(5,5,5,0.72);
+    padding: 6px 14px;
+    backdrop-filter: blur(6px);
+    border: 1px solid rgba(201,168,76,0.25);
+  }
+
+  /* Secondary strip: 4 columns */
+  .espacio-strip {
+    display: grid;
+    grid-template-columns: 1fr 260px 1fr 1fr;
+    gap: 2px; background: var(--border);
+    height: 300px;
+  }
+  .espacio-strip-cell {
+    position: relative; overflow: hidden; cursor: none;
+  }
+  .espacio-strip-cell img {
+    width: 100%; height: 100%; object-fit: cover;
+    filter: brightness(0.45) saturate(0.6);
+    transition: filter 0.6s ease, transform 0.6s ease;
+    display: block;
+  }
+  .espacio-strip-cell:hover img { filter: brightness(0.65) saturate(0.85); transform: scale(1.04); }
+  .espacio-stat-card {
+    background: var(--dark);
+    padding: 48px 36px;
+    display: flex; flex-direction: column; justify-content: center;
+  }
+  .espacio-stat-num {
+    font-family: 'Playfair Display', serif;
+    font-size: 80px; font-weight: 900; color: var(--gold);
+    line-height: 1; margin-bottom: 4px;
+  }
+  .espacio-stat-unit {
+    font-size: 9px; letter-spacing: 4px; text-transform: uppercase;
+    color: var(--gold-dim); margin-bottom: 24px;
+  }
+  .espacio-stat-text {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 16px; font-style: italic;
+    color: rgba(232,224,208,0.5); line-height: 1.75;
+  }
+
+  @media (max-width: 900px) {
+    .espacio-header { padding: 60px 40px; flex-direction: column; align-items: flex-start; gap: 24px; }
+    .espacio-grid { grid-template-columns: 1fr; grid-template-rows: 320px 220px 220px; }
+    .espacio-large { grid-row: auto; }
+    .espacio-strip { grid-template-columns: 1fr 1fr; height: auto; }
+    .espacio-stat-card { height: 200px; }
+  }
+  @media (max-width: 640px) {
+    .espacio-strip { grid-template-columns: 1fr; height: auto; }
+    .espacio-strip-cell { height: 220px; }
+  }
+
+  /* ── DISHES PREVIEW ── */
+  .dishes-section { border-top: 1px solid var(--border); }
+  .dishes-header {
+    padding: 60px 80px 48px;
+    display: flex; align-items: baseline; justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+  }
+  .dishes-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 40px; font-weight: 700; font-style: italic; color: var(--cream);
+  }
+  .dishes-link {
+    font-size: 10px; letter-spacing: 3px; text-transform: uppercase;
+    color: var(--gold); text-decoration: none; cursor: none;
+    display: flex; align-items: center; gap: 10px;
+    transition: opacity 0.2s;
+  }
+  .dishes-link:hover { opacity: 0.7; }
+  .dishes-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2px; background: var(--border);
+  }
+  .dish-card {
+    background: var(--dark);
+    overflow: hidden; position: relative;
+    cursor: none;
+  }
+  .dish-card-img {
+    height: 280px; overflow: hidden;
+  }
+  .dish-card-img img {
+    width: 100%; height: 100%; object-fit: cover;
+    filter: brightness(0.6) saturate(0.7);
+    transition: transform 0.5s ease, filter 0.3s;
+  }
+  .dish-card:hover .dish-card-img img {
+    transform: scale(1.07);
+    filter: brightness(0.8) saturate(1);
+  }
+  .dish-card-body { padding: 24px 24px 28px; }
+  .dish-card-cat {
+    font-size: 8px; letter-spacing: 3px; text-transform: uppercase;
+    color: var(--gold-dim); margin-bottom: 8px;
+  }
+  .dish-card-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 17px; font-weight: 600; color: var(--cream);
+    margin-bottom: 8px; line-height: 1.2;
+  }
+  .dish-card-price {
+    font-family: 'Playfair Display', serif;
+    font-size: 15px; color: var(--gold);
+  }
+
+  /* ── PRESS ── */
+  .press-section {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+  .press-item {
+    padding: 60px 52px;
+    border-right: 1px solid var(--border);
+    display: flex; flex-direction: column; gap: 20px;
+  }
+  .press-item:last-child { border-right: none; }
+  .press-stars { color: var(--gold); font-size: 14px; letter-spacing: 3px; }
+  .press-quote {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 18px; font-style: italic;
+    color: rgba(232,224,208,0.7); line-height: 1.7; flex: 1;
+  }
+  .press-source {
+    font-size: 9px; letter-spacing: 3px; text-transform: uppercase;
+    color: var(--gold-dim);
+    padding-top: 20px; border-top: 1px solid var(--border);
+  }
+
+  /* ── LOCATION ── */
+  .location-section {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+  .location-img {
+    overflow: hidden; height: 500px; position: relative;
+  }
+  .location-img img {
+    width: 100%; height: 100%; object-fit: cover;
+    filter: brightness(0.55) saturate(0.65);
+    transition: transform 0.6s ease;
+  }
+  .location-img:hover img { transform: scale(1.03); }
+  .location-img-label {
+    position: absolute; bottom: 28px; left: 36px;
+    font-family: 'Playfair Display', serif;
+    font-size: 13px; font-style: italic; color: var(--gold);
+    letter-spacing: 2px;
+  }
+  .location-info {
+    padding: 80px;
+    background: var(--dark);
+    border-left: 1px solid var(--border);
+    display: flex; flex-direction: column; justify-content: center; gap: 40px;
+  }
+  .location-eyebrow {
+    font-size: 9px; letter-spacing: 4px; text-transform: uppercase; color: var(--gold);
+  }
+  .location-address {
+    font-family: 'Playfair Display', serif;
+    font-size: 36px; font-weight: 700; color: var(--cream); line-height: 1.2;
+  }
+  .location-address em { color: var(--gold); font-style: italic; }
+  .location-details {
+    display: flex; flex-direction: column; gap: 14px;
+  }
+  .location-row {
+    display: flex; gap: 20px; align-items: baseline;
+    padding-bottom: 14px; border-bottom: 1px solid rgba(255,255,255,0.05);
+    font-size: 13px;
+  }
+  .location-row-label { color: var(--gold-dim); min-width: 80px; text-transform: uppercase; font-size: 10px; letter-spacing: 1px; }
+  .location-row-val { color: rgba(232,224,208,0.6); }
+  .location-cta { display: flex; gap: 16px; flex-wrap: wrap; }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 1100px) {
+    .menu-grid { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
+    .vini-grid { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 900px) {
+    .hero-content { grid-template-columns: 1fr; padding: 60px 40px 80px; }
+    .hero-right { display: none; }
+    .carta-hero { padding: 60px 40px 40px; flex-direction: column; }
+    .menu-tabs { padding: 0 40px; }
+    .menu-category { padding: 40px 40px 60px; }
+    .menu-grid { grid-template-columns: 1fr 1fr; }
+    .menu-featured .menu-item { grid-template-columns: 1fr; }
+    .menu-featured .menu-item-img { height: 220px; }
+    .storia-grid { grid-template-columns: 1fr; }
+    .storia-right { height: 400px; }
+    .storia-img-grid { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr; }
+    .tavola-container { grid-template-columns: 1fr; }
+    .tavola-right { height: 300px; }
+    .contatto-grid { grid-template-columns: 1fr; }
+    .contatto-col { border-right: none; border-bottom: 1px solid var(--border); padding: 48px 40px; }
+    .section-topbar { padding: 16px 40px; }
+    .storia-left { padding: 60px 40px; }
+    .tavola-left { padding: 60px 40px; }
+    .vino-item { grid-template-columns: 140px 1fr; }
+  }
+  @media (max-width: 900px) {
+    .chef-section { grid-template-columns: 1fr; }
+    .chef-img { height: 400px; }
+    .chef-info { border-left: none; border-top: 1px solid var(--border); padding: 60px 40px; }
+    .dishes-grid { grid-template-columns: 1fr 1fr; }
+    .press-section { grid-template-columns: 1fr; }
+    .press-item { border-right: none; border-bottom: 1px solid var(--border); }
+    .location-section { grid-template-columns: 1fr; }
+    .location-img { height: 320px; }
+    .location-info { border-left: none; border-top: 1px solid var(--border); padding: 60px 40px; }
+    .quote-band { padding: 60px 40px; gap: 30px; }
+    .quote-mark { font-size: 80px; }
+    .dishes-header { padding: 48px 40px 36px; flex-direction: column; gap: 16px; }
+  }
+  @media (max-width: 640px) {
+    #sidebar { width: 52px; }
+    #main { margin-left: 52px; }
+    .hero-title { font-size: 52px; }
+    .hero-content { padding: 40px 24px 60px; }
+    .section-topbar { padding: 14px 24px; }
+    .topbar-brand { font-size: 20px; letter-spacing: 4px; }
+    .menu-tabs { padding: 0 20px; }
+    .menu-category { padding: 32px 20px 48px; }
+    .carta-hero { padding: 40px 24px 32px; }
+    .storia-left { padding: 40px 24px; }
+    .tavola-left { padding: 40px 24px; }
+    .form-row { grid-template-columns: 1fr; }
+    .contatto-col { padding: 40px 24px; }
+    .site-footer { padding: 20px 24px; flex-direction: column; gap: 12px; text-align: center; }
+    .menu-grid { grid-template-columns: 1fr; }
+    .vino-item { grid-template-columns: 1fr; }
+    .vino-photo { height: 180px; }
+  }
+</style>
+</head>
+<body>
+
+<div id="cursor"></div>
+<div id="cursor-ring"></div>
+
+<nav id="sidebar">
+  <div class="logo-mark">NERO</div>
+  <ul class="nav-links">
+    <li><a href="#" class="nav-link active" data-tab="casa">Casa</a></li>
+    <li><a href="#" class="nav-link" data-tab="carta">Carta</a></li>
+    <li><a href="#" class="nav-link" data-tab="storia">Storia</a></li>
+    <li><a href="#" class="nav-link" data-tab="tavola">Tavola</a></li>
+    <li><a href="#" class="nav-link" data-tab="contatto">Contatto</a></li>
+  </ul>
+  <div class="nav-year">EST. 2019</div>
+</nav>
+
+<main id="main">
+
+  <!-- ══ CASA ══ -->
+  <section id="tab-casa" class="tab-section active">
+
+    <!-- ─ HERO ─ -->
+    <div style="position:relative;min-height:100vh;overflow:hidden;">
+      <div class="hero-bg"></div>
+      <div class="hero-overlay"></div>
+      <div class="hero-content">
+        <div class="hero-left">
+          <div class="hero-eyebrow">Milano · Nápoli · Madrid · 2025</div>
+          <h1 class="hero-title">LA<br>NUO<em>VA TAVOLA</em></h1>
+          <p class="hero-sub">Madrid acaba de encontrar su mesa italiana definitiva. NERO abre sus puertas con una sola ambición: ser el mejor restaurante italiano de España.</p>
+          <a href="#" class="btn-primary" onclick="switchTab('carta'); return false;">
+            Ver la carta <span class="btn-arrow">→</span>
+          </a>
+        </div>
+        <div class="hero-right">
+          <div class="hero-stat-grid">
+            <div class="hero-stat"><div class="hero-stat-num">2025</div><div class="hero-stat-label">Apertura en Madrid</div></div>
+            <div class="hero-stat"><div class="hero-stat-num">1ª</div><div class="hero-stat-label">Ambición · Michelin 2026</div></div>
+            <div class="hero-stat"><div class="hero-stat-num">48</div><div class="hero-stat-label">Platos en carta</div></div>
+            <div class="hero-stat"><div class="hero-stat-num">100%</div><div class="hero-stat-label">Producto de origen Italia</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="hero-bottom">Descubre más</div>
+    </div>
+
+
+    <!-- ─ CITA ─ -->
+    <div class="quote-band">
+      <div class="quote-mark">"</div>
+      <div class="quote-body">
+        <div class="quote-text">
+          No vine a Madrid a hacer cocina italiana para españoles. Vine a hacer la mejor cocina italiana del mundo, y resulta que el mejor sitio para hacerlo ahora mismo es Madrid.
+        </div>
+        <div class="quote-source">Marco Ferretti · El País Semanal, Octubre 2025</div>
+      </div>
+    </div>
+
+    <!-- ─ EL ESPACIO ─ -->
+    <div class="espacio-section">
+
+      <div class="espacio-header">
+        <div class="espacio-hl">
+          <div class="espacio-eyebrow">Interior · Arquitectura · Atmósfera</div>
+          <h2 class="espacio-title">El Espacio</h2>
+        </div>
+        <p class="espacio-sub">Un comedor diseñado para que la comida sea la única protagonista. Cuarenta y ocho cubiertos, ninguna distracción.</p>
+      </div>
+
+      <!-- masonry: gran sala + 2 detalles -->
+      <div class="espacio-grid">
+        <div class="espacio-cell espacio-large">
+          <img src="https://images.unsplash.com/photo-1776993298576-dd8a9205926f?w=1200&h=800&q=80&auto=format&fit=crop" alt="La Sala" loading="lazy">
+          <div class="espacio-label">La Sala</div>
+        </div>
+        <div class="espacio-cell">
+          <img src="https://images.unsplash.com/photo-1776993298429-9e68237f433a?w=800&h=420&q=80&auto=format&fit=crop" alt="Las Mesas" loading="lazy">
+          <div class="espacio-label">Las Mesas</div>
+        </div>
+        <div class="espacio-cell">
+          <img src="https://images.unsplash.com/photo-1588416820614-f8d6ac6cea56?w=800&h=420&q=80&auto=format&fit=crop" alt="La Cocina" loading="lazy">
+          <div class="espacio-label">La Cocina</div>
+        </div>
+      </div>
+
+      <!-- tira inferior: 4 paneles -->
+      <div class="espacio-strip">
+        <div class="espacio-strip-cell">
+          <img src="https://images.unsplash.com/photo-1776993298456-98c71c0e177e?w=600&h=400&q=80&auto=format&fit=crop" alt="El Ambiente" loading="lazy">
+          <div class="espacio-label">El Ambiente</div>
+        </div>
+        <div class="espacio-strip-cell espacio-stat-card">
+          <div class="espacio-stat-num">48</div>
+          <div class="espacio-stat-unit">cubiertos</div>
+          <div class="espacio-stat-text">Un aforo íntimo para garantizar que cada visita sea una experiencia singular.</div>
+        </div>
+        <div class="espacio-strip-cell">
+          <img src="https://images.unsplash.com/photo-1776993298442-cf6a9372a986?w=600&h=400&q=80&auto=format&fit=crop" alt="El Servicio" loading="lazy">
+          <div class="espacio-label">El Servicio</div>
+        </div>
+        <div class="espacio-strip-cell">
+          <img src="https://images.unsplash.com/photo-1577219492769-b63a779fac28?w=600&h=400&q=80&auto=format&fit=crop" alt="La Cocina Abierta" loading="lazy">
+          <div class="espacio-label">La Cocina Abierta</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ─ PLATOS DESTACADOS ─ -->
+    <div class="dishes-section">
+      <div class="dishes-header">
+        <div class="dishes-title">Platos que no puedes perderte</div>
+        <a href="#" class="dishes-link" onclick="switchTab('carta'); return false;">
+          Ver la carta completa <span>→</span>
+        </a>
+      </div>
+      <div class="dishes-grid">
+        <div class="dish-card">
+          <div class="dish-card-img">
+            <img src="https://images.unsplash.com/photo-1556761223-4c4282c73f77?w=600&h=560&q=80&auto=format&fit=crop" alt="Tagliolini al Tartufo" loading="lazy">
+          </div>
+          <div class="dish-card-body">
+            <div class="dish-card-cat">Primi · Signature</div>
+            <div class="dish-card-name">Tagliolini al Tartufo Nero</div>
+            <div class="dish-card-price">€38</div>
+          </div>
+        </div>
+        <div class="dish-card">
+          <div class="dish-card-img">
+            <img src="https://images.unsplash.com/photo-1600891964092-4316c288032e?w=600&h=560&q=80&auto=format&fit=crop" alt="Costata" loading="lazy">
+          </div>
+          <div class="dish-card-body">
+            <div class="dish-card-cat">Secondi · Premium</div>
+            <div class="dish-card-name">Costata di Manzo alla Brace</div>
+            <div class="dish-card-price">€52</div>
+          </div>
+        </div>
+        <div class="dish-card">
+          <div class="dish-card-img">
+            <img src="https://images.unsplash.com/photo-1767500537505-0978aff4ad05?w=600&h=560&q=80&auto=format&fit=crop" alt="Burrata" loading="lazy">
+          </div>
+          <div class="dish-card-body">
+            <div class="dish-card-cat">Antipasti · Del chef</div>
+            <div class="dish-card-name">Burrata di Puglia</div>
+            <div class="dish-card-price">€18</div>
+          </div>
+        </div>
+        <div class="dish-card">
+          <div class="dish-card-img">
+            <img src="https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?w=600&h=560&q=80&auto=format&fit=crop" alt="Tiramisù" loading="lazy">
+          </div>
+          <div class="dish-card-body">
+            <div class="dish-card-cat">Dolci · Clásico</div>
+            <div class="dish-card-name">Tiramisù della Casa</div>
+            <div class="dish-card-price">€14</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─ PRENSA ─ -->
+    <div class="press-section">
+      <div class="press-item">
+        <div class="press-stars">★★★★★</div>
+        <div class="press-quote">"La apertura más esperada del año en Madrid. Ferretti cocina como si tuviera dos estrellas desde el primer día. Y así será."</div>
+        <div class="press-source">El País — Octubre 2025</div>
+      </div>
+      <div class="press-item">
+        <div class="press-stars">★★★★★</div>
+        <div class="press-quote">"En NERO la pasta es un acto de fe. No hay nada superfluo, nada innecesario. Solo sabor puro y técnica silenciosa."</div>
+        <div class="press-source">Metrópoli — Noviembre 2025</div>
+      </div>
+      <div class="press-item">
+        <div class="press-stars">★★★★☆</div>
+        <div class="press-quote">"El mejor Ossobuco que he comido fuera de Milán, y posiblemente dentro. Madrid tiene ahora una dirección italiana de referencia."</div>
+        <div class="press-source">Condé Nast Traveler — Diciembre 2025</div>
+      </div>
+    </div>
+
+    <!-- ─ UBICACIÓN ─ -->
+    <div class="location-section">
+      <div class="location-img">
+        <img src="https://images.unsplash.com/photo-1776848517525-ccc3a43bfcfb?w=1200&q=90&auto=format&fit=crop" alt="Sala privada NERO" loading="lazy">
+        <div class="location-img-label">Sala Privada · Reservas exclusivas</div>
+      </div>
+      <div class="location-info">
+        <div class="location-eyebrow">Dónde encontrarnos</div>
+        <div class="location-address">Calle de Fortuny, 32<br><em>Almagro · Madrid</em></div>
+        <div class="location-details">
+          <div class="location-row">
+            <div class="location-row-label">Aparcamiento</div>
+            <div class="location-row-val">Parkia Alonso Martínez (3 min a pie)</div>
+          </div>
+          <div class="location-row">
+            <div class="location-row-label">Lun — Vie</div>
+            <div class="location-row-val">14:00 — 22:00</div>
+          </div>
+          <div class="location-row">
+            <div class="location-row-label">Sáb — Dom</div>
+            <div class="location-row-val">14:00 — 00:00</div>
+          </div>
+        </div>
+        <div class="location-cta">
+          <a href="#" class="btn-primary" onclick="switchTab('tavola'); return false;">
+            Reservar mesa <span class="btn-arrow">→</span>
+          </a>
+          <a href="#" class="btn-primary" onclick="switchTab('carta'); return false;">
+            Ver la carta <span class="btn-arrow">→</span>
+          </a>
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- ══ CARTA ══ -->
+  <section id="tab-carta" class="tab-section">
+    <div class="section-topbar">
+      <div class="topbar-title">La Carta</div>
+      <div class="topbar-brand">NERO</div>
+      <div class="topbar-meta">Temporada Primavera / Verano<br>2026</div>
+    </div>
+
+    <div class="carta-hero">
+      <div><h2 class="carta-title">La<br><em>Carta</em></h2></div>
+      <p class="carta-desc">Cada plato es una carta de amor a Italia. Ingredientes de estación, técnica impecable, emoción en cada bocado.</p>
+    </div>
+
+    <div class="menu-tabs">
+      <button class="menu-tab active" data-menu="antipasti">Antipasti</button>
+      <button class="menu-tab" data-menu="primi">Primi Piatti</button>
+      <button class="menu-tab" data-menu="secondi">Secondi</button>
+      <button class="menu-tab" data-menu="dolci">Dolci</button>
+      <button class="menu-tab" data-menu="vini">Vini</button>
+    </div>
+
+    <!-- ─ ANTIPASTI ─ -->
+    <div class="menu-category active" id="menu-antipasti">
+      <div class="menu-category-header">
+        <div class="menu-category-name">Antipasti</div>
+        <div class="menu-category-it">Para comenzar</div>
+      </div>
+
+      <div class="menu-featured">
+        <div class="menu-item">
+          <div class="menu-item-content">
+            <div class="chef-badge">Selección del chef</div>
+            <div class="menu-item-top">
+              <div class="menu-item-name">Carpaccio di Manzo Piemontese</div>
+              <div class="menu-item-price">€24</div>
+            </div>
+            <div class="menu-item-desc">Buey añejo de Piamonte, alcaparras de Pantelleria, aceite de oliva extra virgen Taggiasca y láminas de Parmigiano Reggiano 36 meses.</div>
+            <div class="menu-item-tags"><span class="tag new">Temporada</span><span class="tag">Sin gluten</span></div>
+          </div>
+          <div class="menu-item-img">
+            <img src="https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=800&q=85&auto=format&fit=crop" alt="Carpaccio" loading="lazy">
+          </div>
+        </div>
+      </div>
+
+      <div class="menu-grid">
+        <div class="menu-item">
+          <div class="menu-item-photo">
+            <img src="https://images.unsplash.com/photo-1767500537505-0978aff4ad05?w=600&h=420&q=80&auto=format&fit=crop" alt="Burrata di Puglia" loading="lazy">
+            <div class="menu-item-photo-badge">Burrata</div>
+          </div>
+          <div class="menu-item-body">
+            <div class="menu-item-top"><div class="menu-item-name">Burrata di Puglia</div><div class="menu-item-price">€18</div></div>
+            <div class="menu-item-desc">Burrata fresca de leche de búfala con tomates cherry de Pachino, albahaca y reducción de vinagre balsámico de Módena.</div>
+            <div class="menu-item-tags"><span class="tag veg">Vegetariano</span><span class="tag">Sin gluten</span></div>
+          </div>
+        </div>
+
+        <div class="menu-item">
+          <div class="menu-item-photo">
+            <img src="https://images.unsplash.com/photo-1477921510058-85812315a3c4?w=600&h=420&q=80&auto=format&fit=crop" alt="Vitello Tonnato" loading="lazy">
+            <div class="menu-item-photo-badge">Vitello</div>
+          </div>
+          <div class="menu-item-body">
+            <div class="menu-item-top"><div class="menu-item-name">Vitello Tonnato</div><div class="menu-item-price">€21</div></div>
+            <div class="menu-item-desc">Ternera de Véneto cocida a baja temperatura, salsa de atún ahumado del Cantábrico, alcaparras y limón de Sicilia.</div>
+            <div class="menu-item-tags"><span class="tag">Clásico</span></div>
+          </div>
+        </div>
+
+        <div class="menu-item">
+          <div class="menu-item-photo">
+            <img src="https://images.unsplash.com/photo-1603570416072-84068a0f1358?w=600&h=420&q=80&auto=format&fit=crop" alt="Porcini al Tegamino" loading="lazy">
+            <div class="menu-item-photo-badge">Porcini</div>
+          </div>
+          <div class="menu-item-body">
+            <div class="menu-item-top"><div class="menu-item-name">Porcini al Tegamino</div><div class="menu-item-price">€19</div></div>
+            <div class="menu-item-desc">Setas porcini de los Apeninos salteadas con ajo, perejil, y vino blanco Gavi, sobre tostada de pan di casa.</div>
+            <div class="menu-item-tags"><span class="tag veg">Vegetariano</span><span class="tag new">Temporada</span></div>
+          </div>
+        </div>
+
+        <div class="menu-item">
+          <div class="menu-item-photo">
+            <img src="https://images.unsplash.com/photo-1530260626688-048279320445?w=600&h=420&q=80&auto=format&fit=crop" alt="Tartare di Tonno Rosso" loading="lazy">
+            <div class="menu-item-photo-badge">Tartare</div>
+          </div>
+          <div class="menu-item-body">
+            <div class="menu-item-top"><div class="menu-item-name">Tartare di Tonno Rosso</div><div class="menu-item-price">€26</div></div>
+            <div class="menu-item-desc">Atún rojo de almadraba cortado a cuchillo, aguacate, yuzu y caviar de trucha. Emulsión de wasabi y sésamo tostado.</div>
+            <div class="menu-item-tags"><span class="tag">Sin gluten</span><span class="tag new">Nuevo</span></div>
+          </div>
+        </div>
+
+        <div class="menu-item">
+          <div class="menu-item-photo">
+            <img src="https://images.unsplash.com/photo-1629579436553-6b34e5ddd9de?w=600&h=420&q=80&auto=format&fit=crop" alt="Supplì alla Romana" loading="lazy">
+            <div class="menu-item-photo-badge">Supplì</div>
+          </div>
+          <div class="menu-item-body">
+            <div class="menu-item-top"><div class="menu-item-name">Supplì alla Romana</div><div class="menu-item-price">€14</div></div>
+            <div class="menu-item-desc">Croquetas de risotto alla vaccinara, rellenas de mozzarella fior di latte fundida. Salsa pomodoro casera.</div>
+            <div class="menu-item-tags"><span class="tag veg">Vegetariano</span></div>
+          </div>
+        </div>
+
+        <div class="menu-item">
+          <div class="menu-item-photo">
+            <img src="https://images.unsplash.com/photo-1691200991104-47833be0f043?w=600&h=420&q=80&auto=format&fit=crop" alt="Prosciutto e Fichi" loading="lazy">
+            <div class="menu-item-photo-badge">Prosciutto</div>
+          </div>
+          <div class="menu-item-body">
+            <div class="menu-item-top"><div class="menu-item-name">Prosciutto e Fichi</div><div class="menu-item-price">€22</div></div>
+            <div class="menu-item-desc">Prosciutto di Parma 24 meses, higos de temporada, rúcula silvestre, stracciatella fresca y miel de acacia.</div>
+            <div class="menu-item-tags"><span class="tag">Sin gluten</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─ PRIMI PIATTI ─ -->
+    <div class="menu-category" id="menu-primi">
+      <div class="menu-category-header">
+        <div class="menu-category-name">Primi Piatti</div>
+        <div class="menu-category-it">Pastas y Risottos</div>
+      </div>
+
+      <div class="menu-featured">
+        <div class="menu-item">
+          <div class="menu-item-content">
+            <div class="chef-badge">Signature dish</div>
+            <div class="menu-item-top">
+              <div class="menu-item-name">Tagliolini al Tartufo Nero</div>
+              <div class="menu-item-price">€38</div>
+            </div>
+            <div class="menu-item-desc">Pasta fresca artesana de huevo, mantequilla de trufa negra de Norcia, Parmigiano 36 meses. Laminado en sala.</div>
+            <div class="menu-item-tags"><span class="tag veg">Vegetariano</span><span class="tag new">Especial</span></div>
+          </div>
+          <div class="menu-item-img">
+            <img src="https://images.unsplash.com/photo-1556761223-4c4282c73f77?w=800&q=85&auto=format&fit=crop" alt="Tagliolini al Tartufo" loading="lazy">
+          </div>
+        </div>
+      </div>
+
+      <div class="menu-grid">
+        <div class="menu-item">
+          <div class="menu-item-photo">
+            <img src="https://images.unsplash.com/photo-1755594461640-b800c6bafdfa?w=600&h=420&q=80&auto=format&fit=crop" alt="Spaghetti Carbonara" loading="lazy">
+            <div class="menu-item-photo-badge">Carbonara</div>
+          </div>
+          <div class="menu-item-body">
+            <div class="menu-item-top"><div class="menu-item-name">Spaghetti alla Carbonara</div><div class="menu-item-price">€22</div></div>
+            <div class="menu-item-desc">La receta original romana. Guanciale de Amatrice, yema de huevo de corral, Pecorino Romano DOP, pimienta negra molida en el momento.</div>
+            <div class="menu-item-tags"><span class="tag">Clásico Romano</span></div>
+          </div>
+        </div>
+
+        <div class="menu-item">
+          <div class="menu-item-photo">
+            <img src="https://images.unsplash.com/photo-1476124369491-e7addf5db371?w=600&h=420&q=80&auto=format&fit=crop" alt="Risotto ai Frutti di Mare" loading="lazy">
+            <div class="menu-item-photo-badge">Risotto</div>
+          </div>
+          <div class="menu-item-body">
+            <div class="menu-item-top"><div class="menu-item-name">Risotto ai Frutti di Mare</div><div class="menu-item-price">€28</div></div>
+            <div class="menu-item-desc">Arroz Carnaroli, gambas rojas de Denia, almejas de la Ría de Arousa, bisque de marisco y aceite de perejil.</div>
+            <div class="menu-item-tags"><span class="tag">Sin gluten</span></div>
+          </div>
+        </div>
+
+        <div class="menu-item">
+          <div class="menu-item-photo">
+            <img src="https://images.unsplash.com/photo-1683827449087-ccf5a9e6283c?w=600&h=420&q=80&auto=format&fit=crop" alt="Pappardelle al Ragù" loading="lazy">
+            <div class="menu-item-photo-badge">Pappardelle</div>
+          </div>
+          <div class="menu-item-body">
+            <div class="menu-item-top"><div class="menu-item-name">Pappardelle al Ragù</div><div class="menu-item-price">€24</div></div>
+            <div class="menu-item-desc">Pappardelle al huevo, ragù di manzo y maiale cocido 6 horas con vino Chianti Classico, pomodoro San Marzano y hierbas.</div>
+            <div class="menu-item-tags"><span class="tag">Casa</span></div>
+          </div>
+        </div>
+
+        <div class="menu-item">
+          <div class="menu-item-photo">
+            <img src="https://images.unsplash.com/photo-1601556123240-462c758a50db?w=600&h=420&q=80&auto=format&fit=crop" alt="Gnocchi al Gorgonzola" loading="lazy">
+            <div class="menu-item-photo-badge">Gnocchi</div>
+          </div>
+          <div class="menu-item-body">
+            <div class="menu-item-top"><div class="menu-item-name">Gnocchi al Gorgonzola e Noci</div><div class="menu-item-price">€20</div></div>
+            <div class="menu-item-desc">Ñoquis de patata caseros, crema de gorgonzola dolce DOP, nueces de Sorrento tostadas y miel de trufa.</div>
+            <div class="menu-item-tags"><span class="tag veg">Vegetariano</span></div>
+          </div>
+        </div>
+
+        <div class="menu-item">
+          <div class="menu-item-photo">
+            <img src="https://images.unsplash.com/photo-1519351635902-7c60d09cb2ed?w=600&h=420&q=80&auto=format&fit=crop" alt="Linguine all'Astice" loading="lazy">
+            <div class="menu-item-photo-badge">Astice · Bogavante</div>
+          </div>
+          <div class="menu-item-body">
+            <div class="menu-item-top"><div class="menu-item-name">Linguine all'Astice</div><div class="menu-item-price">€42</div></div>
+            <div class="menu-item-desc">Linguine artesanales, bogavante del Mediterráneo, pomodorini confit, bottarga de mújol de Cerdeña y olio EVO.</div>
+            <div class="menu-item-tags"><span class="tag new">Premium</span></div>
+          </div>
+        </div>
+
+        <div class="menu-item">
+          <div class="menu-item-photo">
+            <img src="https://images.unsplash.com/photo-1632389762435-8c53185e40ae?w=600&h=420&q=80&auto=format&fit=crop" alt="Risotto al Limone e Gamberi" loading="lazy">
+            <div class="menu-item-photo-badge">Risotto</div>
+          </div>
+          <div class="menu-item-body">
+            <div class="menu-item-top"><div class="menu-item-name">Risotto al Limone e Gamberi</div><div class="menu-item-price">€26</div></div>
+            <div class="menu-item-desc">Risotto Acquerello, gambas del Mediterráneo, limón de Amalfi, mantequilla de cultivo y mantecatura al burro.</div>
+            <div class="menu-item-tags"><span class="tag">Sin gluten</span><span class="tag new">Temporada</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─ SECONDI ─ -->
+    <div class="menu-category" id="menu-secondi">
+      <div class="menu-category-header">
+        <div class="menu-category-name">Secondi</div>
+        <div class="menu-category-it">Carnes y Pescados</div>
+      </div>
+
+      <div class="menu-featured">
+        <div class="menu-item">
+          <div class="menu-item-content">
+            <div class="chef-badge">Recomendación del chef</div>
+            <div class="menu-item-top">
+              <div class="menu-item-name">Costata di Manzo alla Brace</div>
+              <div class="menu-item-price">€52</div>
+            </div>
+            <div class="menu-item-desc">Chuletón de Frisona italiana madurado 45 días, brasa de encina, mantequilla de hierbas, flor de sal de Trapani.</div>
+            <div class="menu-item-tags"><span class="tag">Sin gluten</span><span class="tag new">Premium</span></div>
+          </div>
+          <div class="menu-item-img">
+            <img src="https://images.unsplash.com/photo-1600891964092-4316c288032e?w=800&q=85&auto=format&fit=crop" alt="Costata di Manzo" loading="lazy">
+          </div>
+        </div>
+      </div>
+
+      <div class="menu-grid">
+        <div class="menu-item">
+          <div class="menu-item-photo">
+            <img src="https://images.unsplash.com/photo-1572862905000-c5b6244027a5?w=600&h=420&q=80&auto=format&fit=crop" alt="Branzino in Crosta di Sale" loading="lazy">
+            <div class="menu-item-photo-badge">Branzino</div>
+          </div>
+          <div class="menu-item-body">
+            <div class="menu-item-top"><div class="menu-item-name">Branzino in Crosta di Sale</div><div class="menu-item-price">€34</div></div>
+            <div class="menu-item-desc">Lubina salvaje del Mediterráneo en costra de sal con hierbas aromáticas, aceite de limón y alcaparras fritas.</div>
+            <div class="menu-item-tags"><span class="tag">Sin gluten</span></div>
+          </div>
+        </div>
+
+        <div class="menu-item">
+          <div class="menu-item-photo">
+            <img src="https://images.unsplash.com/photo-1546964124-0cce460f38ef?w=600&h=420&q=80&auto=format&fit=crop" alt="Ossobuco alla Milanese" loading="lazy">
+            <div class="menu-item-photo-badge">Ossobuco</div>
+          </div>
+          <div class="menu-item-body">
+            <div class="menu-item-top"><div class="menu-item-name">Ossobuco alla Milanese</div><div class="menu-item-price">€36</div></div>
+            <div class="menu-item-desc">Jarrete de ternera braseado lentamente, gremolata de limón y perejil, acompañado de risotto allo zafferano.</div>
+            <div class="menu-item-tags"><span class="tag">Clásico</span></div>
+          </div>
+        </div>
+
+        <div class="menu-item">
+          <div class="menu-item-photo">
+            <img src="https://images.unsplash.com/photo-1571081538808-612772b00e9f?w=600&h=420&q=80&auto=format&fit=crop" alt="Agnello al Forno" loading="lazy">
+            <div class="menu-item-photo-badge">Agnello</div>
+          </div>
+          <div class="menu-item-body">
+            <div class="menu-item-top"><div class="menu-item-name">Agnello al Forno</div><div class="menu-item-price">€38</div></div>
+            <div class="menu-item-desc">Paletilla de cordero lechal asada al romero y ajo negro, jus de cordero reducido y cebollitas perladas caramelizadas.</div>
+            <div class="menu-item-tags"><span class="tag">Sin gluten</span></div>
+          </div>
+        </div>
+
+        <div class="menu-item">
+          <div class="menu-item-photo">
+            <img src="https://images.unsplash.com/photo-1614549150185-8f85229ff291?w=600&h=420&q=80&auto=format&fit=crop" alt="Filetto di Salmone" loading="lazy">
+            <div class="menu-item-photo-badge">Salmone</div>
+          </div>
+          <div class="menu-item-body">
+            <div class="menu-item-top"><div class="menu-item-name">Filetto di Salmone Selvaggio</div><div class="menu-item-price">€30</div></div>
+            <div class="menu-item-desc">Salmón salvaje del Pacífico, piel crujiente, puré de chirivía al miso, espárragos blancos y salsa verde.</div>
+            <div class="menu-item-tags"><span class="tag">Sin gluten</span><span class="tag new">Temporada</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─ DOLCI ─ -->
+    <div class="menu-category" id="menu-dolci">
+      <div class="menu-category-header">
+        <div class="menu-category-name">Dolci</div>
+        <div class="menu-category-it">Postres</div>
+      </div>
+      <div class="ornament">◆</div>
+
+      <div class="menu-grid">
+        <div class="menu-item">
+          <div class="menu-item-photo">
+            <img src="https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?w=600&h=420&q=80&auto=format&fit=crop" alt="Tiramisù della Casa" loading="lazy">
+            <div class="menu-item-photo-badge">Tiramisù</div>
+          </div>
+          <div class="menu-item-body">
+            <div class="menu-item-top"><div class="menu-item-name">Tiramisù della Casa</div><div class="menu-item-price">€14</div></div>
+            <div class="menu-item-desc">La receta original de la nonna. Savoiardi remojados en espresso, crema de mascarpone, cacao amargo Valrhona. Para dos.</div>
+            <div class="menu-item-tags"><span class="tag">Clásico</span><span class="tag veg">Vegetariano</span></div>
+          </div>
+        </div>
+
+        <div class="menu-item">
+          <div class="menu-item-photo">
+            <img src="https://images.unsplash.com/photo-1501199643997-e3ed9bfbd317?w=600&h=420&q=80&auto=format&fit=crop" alt="Panna Cotta al Caramello" loading="lazy">
+            <div class="menu-item-photo-badge">Panna Cotta</div>
+          </div>
+          <div class="menu-item-body">
+            <div class="menu-item-top"><div class="menu-item-name">Panna Cotta al Caramello</div><div class="menu-item-price">€12</div></div>
+            <div class="menu-item-desc">Nata fresca de Jersey, vainilla de Madagascar, caramelo toffee de mantequilla salada, frambuesas frescas.</div>
+            <div class="menu-item-tags"><span class="tag veg">Vegetariano</span><span class="tag">Sin gluten</span></div>
+          </div>
+        </div>
+
+        <div class="menu-item">
+          <div class="menu-item-photo">
+            <img src="https://images.unsplash.com/photo-1563009390-639e10013c92?w=600&h=420&q=80&auto=format&fit=crop" alt="Cannolo Siciliano" loading="lazy">
+            <div class="menu-item-photo-badge">Cannolo</div>
+          </div>
+          <div class="menu-item-body">
+            <div class="menu-item-top"><div class="menu-item-name">Cannolo Siciliano</div><div class="menu-item-price">€13</div></div>
+            <div class="menu-item-desc">Cáscara crujiente, ricotta di pecora de Sicilia, pistacho de Bronte, naranja confitada y chispas de chocolate negro.</div>
+            <div class="menu-item-tags"><span class="tag veg">Vegetariano</span></div>
+          </div>
+        </div>
+
+        <div class="menu-item">
+          <div class="menu-item-photo">
+            <img src="https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=600&h=420&q=80&auto=format&fit=crop" alt="Fondente al Cioccolato" loading="lazy">
+            <div class="menu-item-photo-badge">Fondente</div>
+          </div>
+          <div class="menu-item-body">
+            <div class="menu-item-top"><div class="menu-item-name">Fondente al Cioccolato</div><div class="menu-item-price">€15</div></div>
+            <div class="menu-item-desc">Coulant de chocolate Manjari 64%, corazón líquido de Nutella artesana, helado de flor de sal y aceite de oliva virgen extra.</div>
+            <div class="menu-item-tags"><span class="tag veg">Vegetariano</span><span class="tag new">Especial</span></div>
+          </div>
+        </div>
+
+        <div class="menu-item">
+          <div class="menu-item-photo">
+            <img src="https://images.unsplash.com/photo-1555992643-0c053cbd87e1?w=600&h=420&q=80&auto=format&fit=crop" alt="Gelato Artigianale" loading="lazy">
+            <div class="menu-item-photo-badge">Gelato</div>
+          </div>
+          <div class="menu-item-body">
+            <div class="menu-item-top"><div class="menu-item-name">Gelato Artigianale</div><div class="menu-item-price">€10</div></div>
+            <div class="menu-item-desc">Selección de helados y sorbetes artesanales del día. Pregunta a tu servidor por los sabores disponibles de temporada.</div>
+            <div class="menu-item-tags"><span class="tag veg">Vegetariano</span><span class="tag">Sin gluten</span></div>
+          </div>
+        </div>
+
+        <div class="menu-item">
+          <div class="menu-item-photo">
+            <img src="https://images.unsplash.com/photo-1535911765168-1fafc87dcfa3?w=600&h=420&q=80&auto=format&fit=crop" alt="Piccola Pasticceria" loading="lazy">
+            <div class="menu-item-photo-badge">Pasticceria</div>
+          </div>
+          <div class="menu-item-body">
+            <div class="menu-item-top"><div class="menu-item-name">Piccola Pasticceria</div><div class="menu-item-price">€16</div></div>
+            <div class="menu-item-desc">Selección de petit fours: macaron de limón, sfogliatella, brutti ma buoni y biscotti al vino.</div>
+            <div class="menu-item-tags"><span class="tag veg">Vegetariano</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─ VINI ─ -->
+    <div class="menu-category" id="menu-vini">
+      <div class="menu-category-header">
+        <div class="menu-category-name">Vini</div>
+        <div class="menu-category-it">Nuestra Bodega</div>
+      </div>
+      <div class="ornament">◆ Selección del sommelier ◆</div>
+
+      <div class="vini-grid">
+        <div class="vino-item">
+          <div class="vino-photo">
+            <img src="https://images.unsplash.com/photo-1626203047621-5d7a84c9812b?w=400&h=400&q=80&auto=format&fit=crop" alt="Barolo" loading="lazy">
+          </div>
+          <div class="vino-body">
+            <div class="vino-region">Piamonte · Nebbiolo · Tinto</div>
+            <div class="vino-name">Barolo DOCG</div>
+            <div class="vino-producer">Giacomo Conterno</div>
+            <div class="vino-desc">Notas de rosa, alquitrán y especias. Elegancia atemporal. Taninos sedosos con largo final.</div>
+            <div class="vino-price">€95 botella &nbsp;·&nbsp; €18 copa</div>
+            <span class="vino-tag sommelier">Selección sommelier</span>
+          </div>
+        </div>
+
+        <div class="vino-item">
+          <div class="vino-photo">
+            <img src="https://images.unsplash.com/photo-1695634580700-a840538b17ce?w=400&h=400&q=80&auto=format&fit=crop" alt="Brunello" loading="lazy">
+          </div>
+          <div class="vino-body">
+            <div class="vino-region">Toscana · Sangiovese · Tinto</div>
+            <div class="vino-name">Brunello di Montalcino</div>
+            <div class="vino-producer">Biondi Santi</div>
+            <div class="vino-desc">Complejidad suprema, taninos sedosos, larga persistencia. Cereza negra, tabaco y cuero fino.</div>
+            <div class="vino-price">€140 botella &nbsp;·&nbsp; €24 copa</div>
+            <span class="vino-tag sommelier">Icónico</span>
+          </div>
+        </div>
+
+        <div class="vino-item">
+          <div class="vino-photo">
+            <img src="https://images.unsplash.com/photo-1611571940159-425a28706d6f?w=400&h=400&q=80&auto=format&fit=crop" alt="Gavi" loading="lazy">
+          </div>
+          <div class="vino-body">
+            <div class="vino-region">Piamonte · Cortese · Blanco</div>
+            <div class="vino-name">Gavi di Gavi DOCG</div>
+            <div class="vino-producer">La Scolca</div>
+            <div class="vino-desc">Fresco, mineral, con notas de flores blancas y limón. El blanco piamontés por excelencia.</div>
+            <div class="vino-price">€52 botella &nbsp;·&nbsp; €12 copa</div>
+            <span class="vino-tag">Blanco</span>
+          </div>
+        </div>
+
+        <div class="vino-item">
+          <div class="vino-photo">
+            <img src="https://images.unsplash.com/photo-1514242879996-d7b3bb2dd531?w=400&h=400&q=80&auto=format&fit=crop" alt="Franciacorta" loading="lazy">
+          </div>
+          <div class="vino-body">
+            <div class="vino-region">Lombardía · Chardonnay · Espumoso</div>
+            <div class="vino-name">Franciacorta Satèn</div>
+            <div class="vino-producer">Bellavista</div>
+            <div class="vino-desc">Método clásico. Burbuja finísima, cremosidad excepcional. El champagne italiano de referencia.</div>
+            <div class="vino-price">€68 botella &nbsp;·&nbsp; €16 copa</div>
+            <span class="vino-tag">Aperitivo ideal</span>
+          </div>
+        </div>
+
+        <div class="vino-item">
+          <div class="vino-photo">
+            <img src="https://images.unsplash.com/photo-1592119748016-a61c40a44320?w=400&h=400&q=80&auto=format&fit=crop" alt="Vermentino" loading="lazy">
+          </div>
+          <div class="vino-body">
+            <div class="vino-region">Cerdeña · Vermentino · Blanco</div>
+            <div class="vino-name">Vermentino di Sardegna</div>
+            <div class="vino-producer">Argiolas</div>
+            <div class="vino-desc">Tropical, salino, vibrante. Perfecto para mariscos y pescados del Mediterráneo.</div>
+            <div class="vino-price">€42 botella &nbsp;·&nbsp; €10 copa</div>
+            <span class="vino-tag">Con pescados</span>
+          </div>
+        </div>
+
+        <div class="vino-item">
+          <div class="vino-photo">
+            <img src="https://images.unsplash.com/photo-1697115355157-c95fbd5250fd?w=400&h=400&q=80&auto=format&fit=crop" alt="Amarone" loading="lazy">
+          </div>
+          <div class="vino-body">
+            <div class="vino-region">Véneto · Corvina · Tinto</div>
+            <div class="vino-name">Amarone della Valpolicella</div>
+            <div class="vino-producer">Allegrini</div>
+            <div class="vino-desc">Uvas apasadas. Opulento, concentrado, notas de cereza negra, chocolate y especias orientales.</div>
+            <div class="vino-price">€110 botella &nbsp;·&nbsp; €20 copa</div>
+            <span class="vino-tag sommelier">Premium</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="site-footer">
+      <div class="footer-brand">NERO</div>
+      <div class="footer-text">Ingredientes de temporada · Km 0 · Producto de origen certificado</div>
+    </div>
+  </section>
+
+  <!-- ══ STORIA ══ -->
+  <section id="tab-storia" class="tab-section">
+    <div class="section-topbar">
+      <div class="topbar-title">La nostra storia</div>
+      <div class="topbar-brand">NERO</div>
+      <div class="topbar-meta">Almagro · Madrid · 2025</div>
+    </div>
+    <div class="storia-grid">
+      <div class="storia-left">
+        <div class="storia-eyebrow">Nuestra historia</div>
+        <h2 class="storia-title">Madrid.<br><em>Italia.</em><br>Sin<br>concesiones.</h2>
+        <p class="storia-body">"Vine a Madrid porque es la ciudad que se merece la cocina italiana que Italia hace décadas que no se atreve a hacer."</p>
+        <p class="storia-body-plain">El Chef Marco Ferretti llega a Madrid tras años formándose en las mejores cocinas de Milán y Nápoles, con una sola obsesión: demostrar que la cocina italiana, cuando se hace bien de verdad, no necesita nada más.<br><br>NERO nace en 2025 en el corazón de Almagro como una declaración de intenciones. Sin fusiones innecesarias. Sin concesiones. Solo producto excepcional, técnica impecable y el alma de Italia en cada plato.</p>
+        <div class="storia-timeline">
+          <div class="timeline-item"><div class="timeline-year">2018</div><div class="timeline-event">Marco Ferretti inicia su formación en Osteria Francescana (Módena, 3★ Michelin).</div></div>
+          <div class="timeline-item"><div class="timeline-year">2022</div><div class="timeline-event">Chef ejecutivo en Il Luogo di Aimo e Nadia, Milán. Dos estrellas Michelin.</div></div>
+          <div class="timeline-item"><div class="timeline-year">Ene 2025</div><div class="timeline-event">Llegada a Madrid. Búsqueda del espacio perfecto en el barrio de Almagro.</div></div>
+          <div class="timeline-item"><div class="timeline-year">Sep 2025</div><div class="timeline-event">Apertura de NERO. Ya con lista de espera antes de abrir. El objetivo: primera estrella Michelin en 2026.</div></div>
+        </div>
+      </div>
+      <div class="storia-right">
+        <div class="storia-img-grid">
+          <div class="storia-img">
+            <img src="https://images.unsplash.com/photo-1516108317508-6788f6a160e4?w=1200&q=85&auto=format&fit=crop" alt="La Toscana" loading="lazy">
+            <div class="storia-img-label">La Toscana</div>
+          </div>
+          <div class="storia-img">
+            <img src="https://images.unsplash.com/photo-1516483638261-f4dbaf036963?w=1200&q=85&auto=format&fit=crop" alt="Cinque Terre" loading="lazy">
+            <div class="storia-img-label">Cinque Terre</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══ TAVOLA ══ -->
+  <section id="tab-tavola" class="tab-section">
+    <div class="section-topbar">
+      <div class="topbar-title">Reservar mesa</div>
+      <div class="topbar-brand">NERO</div>
+      <div class="topbar-meta">Confirmación en menos de 2h</div>
+    </div>
+    <div class="tavola-container">
+      <div class="tavola-left">
+        <h2 class="tavola-title">Reserva<br><em>tu mesa</em></h2>
+        <p class="tavola-sub">Una experiencia para la que merece la pena esperar. Las reservas se confirman en menos de 2 horas.</p>
+        <form id="reserva-form" novalidate>
+          <div class="form-row">
+            <div class="form-group"><label>Nombre</label><input name="nombre" type="text" placeholder="Tu nombre completo"></div>
+            <div class="form-group"><label>Teléfono</label><input name="telefono" type="tel" placeholder="+34 600 000 000"></div>
+          </div>
+          <div class="form-group"><label>Email</label><input name="email" type="email" placeholder="tucorreo@email.com"></div>
+          <div class="form-row">
+            <div class="form-group"><label>Fecha</label><input name="fecha" id="fecha-input" type="date"></div>
+            <div class="form-group">
+              <label>Hora</label>
+              <div class="select-wrap">
+                <select name="hora" id="hora-select">
+                  <option value="">Selecciona una fecha primero</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Comensales</label>
+              <div class="select-wrap">
+                <select name="personas">
+                  <option value="">Número de personas</option>
+                  <option value="1">1 persona</option>
+                  <option value="2">2 personas</option>
+                  <option value="3">3 personas</option>
+                  <option value="4">4 personas</option>
+                  <option value="5">5 personas</option>
+                  <option value="6">6 personas</option>
+                  <option value="privada">Mesa privada (7–12)</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Ocasión</label>
+              <div class="select-wrap">
+                <select name="ocasion">
+                  <option value="">Sin ocasión especial</option>
+                  <option value="cumple">Cumpleaños</option>
+                  <option value="aniversario">Aniversario</option>
+                  <option value="empresa">Cena de empresa</option>
+                  <option value="propuesta">Propuesta de matrimonio</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          <div class="form-group"><label>Notas especiales</label><textarea name="notas" placeholder="Alergias, preferencias, peticiones especiales..." rows="3"></textarea></div>
+          <button type="submit" class="btn-reserve">Confirmar reserva <span>→</span></button>
+        </form>
+        <div class="success-msg" id="success-msg">✓ &nbsp; Reserva recibida — Te contactaremos en menos de 2 horas</div>
+      </div>
+      <div class="tavola-right">
+        <div class="tavola-img"><img src="https://images.unsplash.com/photo-1473093295043-cdd812d0e601?w=1200&q=85&auto=format&fit=crop" alt="Mesa italiana" loading="lazy"></div>
+        <div class="tavola-overlay">
+          <div class="info-card"><div class="info-card-title">Dirección</div><div class="info-card-body">Calle de Fortuny, 32<br>28010 Madrid<br>Barrio de Almagro</div></div>
+          <div class="info-card"><div class="info-card-title">Contacto directo</div><div class="info-card-body">657 547 546<br>reservas@nero-restaurant.com</div></div>
+          <div class="info-card"><div class="info-card-title">Política de reserva</div><div class="info-card-body">Cancelación gratuita hasta 24h antes. Depósito para grupos de 6 o más personas.</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══ CONTATTO ══ -->
+  <section id="tab-contatto" class="tab-section">
+    <div class="section-topbar">
+      <div class="topbar-title">Contacto</div>
+      <div class="topbar-brand">NERO</div>
+      <div class="topbar-meta">Siempre disponibles para ti</div>
+    </div>
+    <div class="contatto-grid">
+      <div class="contatto-col">
+        <div>
+          <div class="contatto-col-title">Encuéntranos</div>
+          <div class="contatto-big">Calle de Fortuny, 32</div>
+          <div class="contatto-small">28010 Madrid · Almagro</div>
+        </div>
+      </div>
+      <div class="contatto-col">
+        <div>
+          <div class="contatto-col-title">Contáctanos</div>
+          <a href="tel:+34657547546" class="contatto-link">+34 657 547 546</a>
+          <a href="mailto:reservas@nero-restaurant.com" class="contatto-link">reservas@nero-restaurant.com</a>
+        </div>
+      </div>
+      <div class="contatto-col">
+        <div>
+          <div class="contatto-col-title">Horario</div>
+          <div class="hours-row"><div class="hours-day">Lunes</div><div class="hours-time">14:00 — 22:00</div></div>
+          <div class="hours-row"><div class="hours-day">Martes</div><div class="hours-time">14:00 — 22:00</div></div>
+          <div class="hours-row"><div class="hours-day">Miércoles</div><div class="hours-time">14:00 — 22:00</div></div>
+          <div class="hours-row"><div class="hours-day">Jueves</div><div class="hours-time">14:00 — 22:00</div></div>
+          <div class="hours-row"><div class="hours-day">Viernes</div><div class="hours-time">14:00 — 22:00</div></div>
+          <div class="hours-row"><div class="hours-day">Sábado</div><div class="hours-time">14:00 — 00:00</div></div>
+          <div class="hours-row"><div class="hours-day">Domingo</div><div class="hours-time">14:00 — 00:00</div></div>
+        </div>
+        <div style="margin-top:40px">
+          <div class="contatto-col-title">Eventos privados</div>
+          <div class="contatto-small" style="color:rgba(232,224,208,0.5);line-height:2">Sala privada para hasta 20 comensales. Menús personalizados para empresas, bodas y celebraciones.<br><br>
+            <a href="mailto:eventos@nero-restaurant.com" class="contatto-link" style="font-size:14px">eventos@nero-restaurant.com</a>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="site-footer">
+      <div class="footer-brand">NERO</div>
+      <div class="footer-text">© 2025 NERO Ristorante · Madrid</div>
+      <div class="footer-text">Política de privacidad · Aviso legal</div>
+    </div>
+  </section>
+
+</main>
+
+<script>
+  history.scrollRestoration = 'manual';
+  window.scrollTo(0, 0);
+
+  // ── CURSOR ──
+  const cursor = document.getElementById('cursor');
+  const ring = document.getElementById('cursor-ring');
+  let mx = 0, my = 0, rx = 0, ry = 0;
+  document.addEventListener('mousemove', e => {
+    mx = e.clientX; my = e.clientY;
+    cursor.style.left = mx + 'px';
+    cursor.style.top = my + 'px';
+  });
+  function animateRing() {
+    rx += (mx - rx) * 0.12;
+    ry += (my - ry) * 0.12;
+    ring.style.left = rx + 'px';
+    ring.style.top = ry + 'px';
+    requestAnimationFrame(animateRing);
+  }
+  animateRing();
+  document.querySelectorAll('a, button, input, select, textarea').forEach(el => {
+    el.addEventListener('mouseenter', () => { ring.style.width = '56px'; ring.style.height = '56px'; ring.style.borderColor = 'rgba(201,168,76,0.8)'; cursor.style.opacity = '0'; });
+    el.addEventListener('mouseleave', () => { ring.style.width = '36px'; ring.style.height = '36px'; ring.style.borderColor = 'rgba(201,168,76,0.5)'; cursor.style.opacity = '1'; });
+  });
+
+  // ── TABS ──
+  function switchTab(tabId) {
+    document.querySelectorAll('.tab-section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.nav-link').forEach(a => a.classList.remove('active'));
+    const section = document.getElementById('tab-' + tabId);
+    const link = document.querySelector('[data-tab="' + tabId + '"]');
+    if (section) { section.classList.add('active'); window.scrollTo(0, 0); }
+    if (link) link.classList.add('active');
+  }
+  document.querySelectorAll('.nav-link').forEach(link => {
+    link.addEventListener('click', e => { e.preventDefault(); switchTab(link.dataset.tab); });
+  });
+
+  // ── MENU CATEGORY TABS ──
+  document.querySelectorAll('.menu-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      const cat = tab.dataset.menu;
+      document.querySelectorAll('.menu-tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.menu-category').forEach(c => c.classList.remove('active'));
+      tab.classList.add('active');
+      const el = document.getElementById('menu-' + cat);
+      if (el) el.classList.add('active');
+    });
+  });
+
+  // ── FORM ──
+  // ── FECHA: mínimo mañana ──
+  const fechaInput = document.getElementById('fecha-input');
+  const horaSelect = document.getElementById('hora-select');
+
+  const HORAS_SEMANA  = ['14:00','14:30','15:00','15:30','16:00','16:30','17:00','17:30','18:00','18:30','19:00','19:30','20:00','20:30','21:00','21:30','22:00'];
+  const HORAS_FINDE   = [...HORAS_SEMANA, '22:30','23:00','23:30','00:00'];
+
+  if (fechaInput) {
+    const hoy = new Date();
+    hoy.setDate(hoy.getDate() + 1);
+    fechaInput.min = hoy.toISOString().split('T')[0];
+
+    fechaInput.addEventListener('change', () => {
+      const d = new Date(fechaInput.value + 'T12:00:00');
+      const dia = d.getDay(); // 0=dom, 6=sab
+      const esFinde = dia === 0 || dia === 6;
+      const horas = esFinde ? HORAS_FINDE : HORAS_SEMANA;
+      const prevVal = horaSelect.value;
+      horaSelect.innerHTML = '<option value="">Selecciona hora</option>';
+      horas.forEach(h => {
+        const o = document.createElement('option');
+        o.value = h; o.textContent = h;
+        if (h === prevVal) o.selected = true;
+        horaSelect.appendChild(o);
+      });
+      horaSelect.disabled = false;
+    });
+  }
+
+  // ── VALIDACIÓN Y ENVÍO ──
+  const form = document.getElementById('reserva-form');
+  const successMsg = document.getElementById('success-msg');
+
+  function validarCampo(input) {
+    const group = input.closest('.form-group');
+    const ok = input.value.trim() !== '' && (input.type !== 'email' || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(input.value));
+    group.classList.toggle('error', !ok);
+    return ok;
+  }
+
+  ['nombre','email','fecha-input','hora-select'].forEach(id => {
+    const el = document.getElementById(id) || form.querySelector(`[name="${id}"]`);
+    if (el) el.addEventListener('change', () => validarCampo(el));
+  });
+
+  form.addEventListener('submit', e => {
+    e.preventDefault();
+    const required = [
+      form.nombre, form.email, fechaInput, horaSelect, form.personas
+    ];
+    const valid = required.map(validarCampo).every(Boolean);
+    if (!valid) return;
+
+    form.style.opacity = '0.3';
+    form.style.pointerEvents = 'none';
+    successMsg.style.display = 'block';
+    setTimeout(() => {
+      form.style.opacity = '1';
+      form.style.pointerEvents = 'auto';
+      successMsg.style.display = 'none';
+      form.reset();
+      horaSelect.innerHTML = '<option value="">Selecciona una fecha primero</option>';
+      form.querySelectorAll('.form-group').forEach(g => g.classList.remove('error'));
+    }, 5000);
+  });
+
+</script>
+</body>
+</html>
